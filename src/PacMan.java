@@ -1,6 +1,15 @@
+/*
+lista de melhorias
+. criar mapa personalizado
+. implementar o teleporte na borda
+. botão de pause (nova variável boolean, se apertar Esc para o gameLoop)
+. usar cereja para assustar os fantasmas ou ganhar mais pontos
+. diminuir a aleatoriedade dos fantasmas - scanear a tela para ver onde eles podem ir
+*/
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Random;
 import javax.swing.*;
 
@@ -74,20 +83,20 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     private final int boardWidth = tileSize * cols;
     private final int boardHeight = tileSize * rows;
 
-    private Image wallImg;
-    private Image redGhostImg;
-    private Image blueGhostImg;
-    private Image pinkGhostImg;
-    private Image orangeGhostImg;
+    private final Image wallImg;
+    private final Image redGhostImg;
+    private final Image blueGhostImg;
+    private final Image pinkGhostImg;
+    private final Image orangeGhostImg;
 
-    private Image pacmanUpImg;
-    private Image pacmanDownImg;
-    private Image pacmanLeftImg;
-    private Image pacmanRightImg;
+    private final Image pacmanUpImg;
+    private final Image pacmanDownImg;
+    private final Image pacmanLeftImg;
+    private final Image pacmanRightImg;
 
     //X = wall, O = skip, P = pac man, ' ' = food
     //Ghosts: b = blue, o = orange, p = pink, r = red
-    private String[] tileMap = { // criar mapa personalizado e implementar o teleporte
+    private final String[] tileMap = {
             "XXXXXXXXXXXXXXXXXXX",
             "X        X        X",
             "X XX XXX X XXX XX X",
@@ -120,26 +129,27 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     char[] direction = {'U', 'D', 'L', 'R'};
     Random rand = new Random();
     int score = 0;
-    int lives = 3;
+    int highScore = 0;
+    int lives = 1;
     boolean gameOver = false;
 
     PacMan() {
         setPreferredSize(new Dimension(boardWidth, boardHeight)); // mesmo tamanho da janela
         setBackground(Color.darkGray); // prefiro do que preto, diminui eye strain
         addKeyListener(this);
-         setFocusable(true);
+        setFocusable(true);
 
-        wallImg = new ImageIcon(getClass().getResource("./wall.png")).getImage();
+        wallImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./wall.png"))).getImage();
 
-        redGhostImg = new ImageIcon(getClass().getResource("./redGhost.png")).getImage();
-        blueGhostImg = new ImageIcon(getClass().getResource("./blueGhost.png")).getImage();
-        pinkGhostImg = new ImageIcon(getClass().getResource("./pinkGhost.png")).getImage();
-        orangeGhostImg = new ImageIcon(getClass().getResource("./orangeGhost.png")).getImage();
+        redGhostImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./redGhost.png"))).getImage();
+        blueGhostImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./blueGhost.png"))).getImage();
+        pinkGhostImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./pinkGhost.png"))).getImage();
+        orangeGhostImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./orangeGhost.png"))).getImage();
 
-        pacmanUpImg = new ImageIcon(getClass().getResource("./pacmanUp.png")).getImage();
-        pacmanDownImg = new ImageIcon(getClass().getResource("./pacmanDown.png")).getImage();
-        pacmanLeftImg = new ImageIcon(getClass().getResource("./pacmanLeft.png")).getImage();
-        pacmanRightImg = new ImageIcon(getClass().getResource("./pacmanRight.png")).getImage();
+        pacmanUpImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./pacmanUp.png"))).getImage();
+        pacmanDownImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./pacmanDown.png"))).getImage();
+        pacmanLeftImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./pacmanLeft.png"))).getImage();
+        pacmanRightImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./pacmanRight.png"))).getImage();
 
         loadMap();
 
@@ -214,7 +224,35 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         g.setColor(Color.white);
         g.setFont(new Font("Arial", Font.BOLD, 20));
         if (gameOver) {
-            g.drawString("Game Over: " + score, boardWidth/2 - 100, boardHeight/2);
+            g.setFont(new Font("Arial", Font.BOLD, 32));
+
+            String newHighScoreText = "New high score! " + score;
+            String highScoreText = "High Score: " + highScore;
+            String gameOverText = "Game Over.";
+            String gameOverScoreText = "Game Over: " + score;
+            String restartText = "Press SPACE to restart";
+
+            int newHighScoreWidth = g.getFontMetrics().stringWidth(newHighScoreText);
+            int highScoreWidth = g.getFontMetrics().stringWidth(highScoreText);
+            int gameOverWidth = g.getFontMetrics().stringWidth(gameOverText);
+            int gameOverScoreWidth = g.getFontMetrics().stringWidth(gameOverScoreText);
+            int restartWidth = g.getFontMetrics().stringWidth(restartText);
+
+            int centerX = boardWidth / 2;
+
+            g.setColor(Color.white);
+            g.fillRect(centerX - restartWidth/2 - 10, boardHeight/2 - 80, restartWidth + 20, 140);
+
+            g.setColor(Color.red);
+            if (score > highScore) {
+                g.drawString(newHighScoreText, centerX - newHighScoreWidth/2, boardHeight/2 - 40);
+                g.drawString(gameOverText, centerX - gameOverWidth/2, boardHeight/2);
+            } else {
+                g.drawString(highScoreText, centerX - highScoreWidth/2, boardHeight/2 - 40);
+                g.drawString(gameOverScoreText, centerX - gameOverScoreWidth/2, boardHeight/2);
+            }
+
+            g.drawString(restartText, centerX - restartWidth/2, boardHeight/2 + 40);
         } else {
             g.drawString(lives + "♥  " + "Score: " + score, tileSize/2, 24);
         }
@@ -306,6 +344,10 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
         if (gameOver && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            if (score > highScore) {
+                highScore = score;
+            }
+
             loadMap(); // cria a comida toda de novo
             resetPositions();
             lives = 3;
