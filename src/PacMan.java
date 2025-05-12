@@ -130,7 +130,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     Random rand = new Random();
     int score = 0;
     int highScore = 0;
-    int lives = 1;
+    int lives = 3;
     boolean gameOver = false;
 
     PacMan() {
